@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/ipharmacares/public_html/
+    - /bin/cp * $DEPLOYPATH
