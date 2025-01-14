@@ -3,5 +3,5 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/ipharmacares/public_html/
     - export REPOPATH=/home/ipharmacares/repositories/img
-    /bin/cp -R * $DEPLOYPATH.
+    /bin/cp -R . $DEPLOYPATH.
 
