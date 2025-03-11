@@ -267,8 +267,8 @@
 							<div class="col-12">
 								<div class="blog-comments">
 									<h2>All Comments</h2>
-									<div id="comments"></div>
-									<!--div id="commentsContainer" class="comments-body">
+									
+									<div id="commentsContainer" class="comments-body">
 										<div class="single-comments">
 											<div class="main">
 												<div class="head">
@@ -281,34 +281,8 @@
 													<a href="#"><i class="fa fa-reply"></i>replay</a>
 												</div>
 											</div>
-										</div>		
-										<div class="single-comments left">
-											<div class="main">
-												<div class="head">
-													<img src="img/author2.jpg" alt="#"/>
-												</div>
-												<div class="body">
-													<h4>Naimur Rahman</h4>
-													<div class="comment-meta"><span class="meta"><i class="fa fa-calendar"></i>March 05, 2019</span><span class="meta"><i class="fa fa-clock-o"></i>03:38 AM</span></div>
-													<p>Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words Mirum est notare quam littera gothica, quam nunc putamus parum claram, anteposuerit litterarum formas</p>
-													<a href="#"><i class="fa fa-reply"></i>replay</a>
-												</div>
-											</div>
-										</div>		
-										<div class="single-comments">
-											<div class="main">
-												<div class="head">
-													<img src="img/author3.jpg" alt="#"/>
-												</div>
-												<div class="body">
-													<h4>Suriya Molharta</h4>
-													<div class="comment-meta"><span class="meta"><i class="fa fa-calendar"></i>March 05, 2019</span><span class="meta"><i class="fa fa-clock-o"></i>03:38 AM</span></div>
-													<p>Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words Mirum est notare quam littera gothica, quam nunc putamus parum claram, anteposuerit litterarum formas</p>
-													<a href="#"><i class="fa fa-reply"></i>replay</a>
-												</div>
-											</div>
-										</div>		
-									</div-->
+										</div>	
+									</div>
 								</div>
 							</div>
 							<div class="col-12">
@@ -508,10 +482,42 @@
 			// Load existing comments on page load
 			window.onload = function() {
 				fetch("view_comments.php")
-				.then(response => response.text())
-				.then(data => {
-					document.getElementById("comments").innerHTML = data;
-				});
+				.then(response => response.json())
+            .then(comments => {
+                const commentsContainer = document.getElementById('commentsContainer');
+                commentsContainer.innerHTML = ''; // Clear previous comments
+                
+                comments.forEach(comment => {
+                    const date = new Date(comment.created_at);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: '2-digit'
+                    });
+                    const formattedTime = date.toLocaleTimeString('en-US', {
+                        hour: '2-digit', minute: '2-digit'
+                    });
+
+                    const commentHTML = `
+                        <div class="single-comments">
+                            <div class="main">
+                                <div class="head">
+                                    <img src="img/author1.jpg" alt="#"/>
+                                </div>
+                                <div class="body">
+                                    <h4>${comment.first_name} ${comment.last_name}</h4>
+                                    <div class="comment-meta">
+                                        <span class="meta"><i class="fa fa-calendar"></i>${formattedDate}</span>
+                                        <span class="meta"><i class="fa fa-clock-o"></i>${formattedTime}</span>
+                                    </div>
+                                    <p>${comment.message}</p>
+                                    <a href="#"><i class="fa fa-reply"></i>reply</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    commentsContainer.insertAdjacentHTML('beforeend', commentHTML);
+                });
+            })
+            .catch(error => console.error('Error loading comments:', error));
 			};
 			</script>
     </body>
