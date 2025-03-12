@@ -41,6 +41,30 @@
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="style.css">
         <link rel="stylesheet" href="css/responsive.css">
+		<style>
+			.pagination {
+				margin: 10px 0;
+				text-align: center;
+			}
+			
+			.pagination button {
+				margin: 2px;
+				padding: 5px 10px;
+				background-color: #f0f0f0;
+				border: 1px solid #ccc;
+				cursor: pointer;
+			}
+			
+			.pagination button.active {
+				background-color: #007bff;
+				color: white;
+			}
+			
+			.pagination button:hover {
+				background-color: #007bff;
+				color: white;
+			}			
+		</style>
 		
     </head>
     <body>
@@ -268,21 +292,8 @@
 								<div class="blog-comments">
 									<h2>All Comments</h2>
 									
-									<div id="commentsContainer" class="comments-body">
-										<div class="single-comments">
-											<div class="main">
-												<div class="head">
-													<img src="img/author1.jpg" alt="#"/>
-												</div>
-												<div class="body">
-													<h4>Afsana Mimi</h4>
-													<div class="comment-meta"><span class="meta"><i class="fa fa-calendar"></i>March 05, 2019</span><span class="meta"><i class="fa fa-clock-o"></i>03:38 AM</span></div>
-													<p>Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words Mirum est notare quam littera gothica, quam nunc putamus parum claram, anteposuerit litterarum formas</p>
-													<a href="#"><i class="fa fa-reply"></i>replay</a>
-												</div>
-											</div>
-										</div>	
-									</div>
+									<div id="commentsContainer" class="comments-body"></div>
+									<div id="pagination" class="pagination"></div>
 								</div>
 							</div>
 							<div class="col-12">
@@ -464,61 +475,95 @@
 			
 				const form = document.getElementById("commentForm");
     			const formData = new FormData(form);
-				for (const [key, value] of formData.entries()) {
-					console.log(key, value);
-				}
 				fetch("save_comment.php", {
 					method: "POST",
 					body: formData
 				})
 				.then(response => response.text())
 				.then(data => {
-					document.getElementById("comments").innerHTML = data + document.getElementById("comments").innerHTML;
+					//document.getElementById("comments").innerHTML = data + document.getElementById("comments").innerHTML;
 					document.getElementById("commentForm").reset();
+					location.reload();
 				})
 				.catch(error => console.error("Error:", error));
 			});
-			
+
+			//fetch the current comments
+			let currentPage = 1;
+
+			function fetchComments(page = 1) {
+				fetch(`view_comments.php?page=${page}`)
+					.then(response => {
+						if (!response.ok) {
+							throw new Error(`HTTP error! status: ${response.status}`);
+						}
+						return response.json();
+					})
+					.then(data => {
+						const comments = data.comments;
+						const totalPages = data.totalPages;
+						const commentsContainer = document.getElementById('commentsContainer');
+						const paginationContainer = document.getElementById('pagination');
+
+						// Clear previous comments
+						commentsContainer.innerHTML = '';
+
+						comments.forEach(comment => {
+							const date = new Date(comment.created_at);
+							const formattedDate = date.toLocaleDateString('en-US', {
+								year: 'numeric', month: 'long', day: '2-digit'
+							});
+							const formattedTime = date.toLocaleTimeString('en-US', {
+								hour: '2-digit', minute: '2-digit'
+							});
+
+							const commentHTML = `
+								<div class="single-comments">
+									<div class="main">
+										<div class="head">
+											<img src="img/user.png" alt="#"/>
+										</div>
+										<div class="body">
+											<h4>${comment.first_name} ${comment.last_name}</h4>
+											<div class="comment-meta">
+												<span class="meta"><i class="fa fa-calendar"></i>${formattedDate}</span>
+												<span class="meta"><i class="fa fa-clock-o"></i>${formattedTime}</span>
+											</div>
+											<p>${comment.message}</p>
+										</div>
+									</div>
+								</div>
+							`;
+							commentsContainer.insertAdjacentHTML('beforeend', commentHTML);
+						});
+
+						// Pagination
+						paginationContainer.innerHTML = '';
+						if (totalPages > 1) {
+							let paginationHTML = '';
+
+							if (page > 1) {
+								paginationHTML += `<button onclick="fetchComments(${page - 1})">« Prev</button>`;
+							}
+
+							for (let i = 1; i <= totalPages; i++) {
+								paginationHTML += `<button onclick="fetchComments(${i})" ${i === page ? 'class="active"' : ''}>${i}</button>`;
+							}
+
+							if (page < totalPages) {
+								paginationHTML += `<button onclick="fetchComments(${page + 1})">Next »</button>`;
+							}
+
+							paginationContainer.innerHTML = paginationHTML;
+						}
+					})
+					.catch(error => console.error('Error loading comments:', error));
+			}
+			fetchComments();
 			// Load existing comments on page load
 			window.onload = function() {
-				fetch("view_comments.php")
-				.then(response => response.json())
-            .then(comments => {
-                const commentsContainer = document.getElementById('commentsContainer');
-                commentsContainer.innerHTML = ''; // Clear previous comments
-                
-                comments.forEach(comment => {
-                    const date = new Date(comment.created_at);
-                    const formattedDate = date.toLocaleDateString('en-US', {
-                        year: 'numeric', month: 'long', day: '2-digit'
-                    });
-                    const formattedTime = date.toLocaleTimeString('en-US', {
-                        hour: '2-digit', minute: '2-digit'
-                    });
-
-                    const commentHTML = `
-                        <div class="single-comments">
-                            <div class="main">
-                                <div class="head">
-                                    <img src="img/author1.jpg" alt="#"/>
-                                </div>
-                                <div class="body">
-                                    <h4>${comment.first_name} ${comment.last_name}</h4>
-                                    <div class="comment-meta">
-                                        <span class="meta"><i class="fa fa-calendar"></i>${formattedDate}</span>
-                                        <span class="meta"><i class="fa fa-clock-o"></i>${formattedTime}</span>
-                                    </div>
-                                    <p>${comment.message}</p>
-                                    <a href="#"><i class="fa fa-reply"></i>reply</a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    commentsContainer.insertAdjacentHTML('beforeend', commentHTML);
-                });
-            })
-            .catch(error => console.error('Error loading comments:', error));
-			};
-			</script>
+				fetchComments();
+			}
+		</script>
     </body>
 </html>
